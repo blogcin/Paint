@@ -1,11 +1,8 @@
 package xyz.alteration.paint.draw;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -14,26 +11,16 @@ import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
-import android.graphics.PorterDuff;
-import android.os.Environment;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.text.Editable;
 import android.util.Log;
-import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
-
-import static android.R.attr.fraction;
-import static android.R.attr.width;
-import static android.support.v7.appcompat.R.attr.height;
 
 /**
  * Created by blogcin on 2016-11-20.
@@ -62,6 +49,12 @@ public class DrawView extends View {
 
     private Activity parentActivity = null;
 
+    private final int DEFAULT_SIZE = 16;
+    private int size = DEFAULT_SIZE;
+
+    private final int DEFAULT_COLOR = Color.BLACK;
+    private int color = DEFAULT_COLOR;
+
     public DrawView(Context context, ScreenInfo screenInfo, Activity activity) {
         super(context);
 
@@ -79,9 +72,13 @@ public class DrawView extends View {
         bitmapPaint = new Paint(Paint.DITHER_FLAG);
     }
 
+    public void setColor(int color) {
+        this.color = color;
+    }
+
     public void setEraser() {
         paint = new Paint();
-        paint.setStrokeWidth(16);
+        paint.setStrokeWidth(size);
         paint.setColor(Color.WHITE);
         paint.setAntiAlias(true);
         paint.setStyle(Paint.Style.STROKE);
@@ -90,11 +87,15 @@ public class DrawView extends View {
 
     public void setPen() {
         paint = new Paint();
-        paint.setStrokeWidth(3);
-        paint.setColor(Color.BLACK);
+        paint.setStrokeWidth(size);
+        paint.setColor(color);
         paint.setStyle(Paint.Style.STROKE);
         paint.setAntiAlias(true);
         drawType = DrawType.PEN;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
     }
 
     public void setBrush() {
@@ -102,9 +103,9 @@ public class DrawView extends View {
         paint.setAlpha(0x80);
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeJoin(Paint.Join.ROUND);
-        paint.setColor(Color.RED);
+        paint.setColor(color);
         paint.setStrokeCap(Paint.Cap.BUTT);
-        paint.setStrokeWidth(30);
+        paint.setStrokeWidth(size);
         paint.setAntiAlias(true);
         paint.setPathEffect(new DashPathEffect(new float[] { 2, 2, 2, 2, 2 }, 0));
         drawType = DrawType.BRUSH;
@@ -132,10 +133,42 @@ public class DrawView extends View {
         coordinatesY = y;
     }
 
+    private void setFont() {
+        paint = new Paint();
+        paint.setStrokeWidth(size);
+        paint.setColor(color);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setAntiAlias(true);
+    }
+
+    public void update() {
+
+        switch(drawType) {
+            case PEN:
+                setPen();
+                break;
+            case RECTANGLE:
+                drawRectangle();
+                break;
+            case TRIANGLE:
+                drawTriangle();
+                break;
+            case BRUSH:
+                setBrush();
+                break;
+            case TEXT:
+                drawText();
+                break;
+            case ERASER:
+                setEraser();
+                break;
+        }
+    }
+
     private void setFigure() {
         paint = new Paint();
-        paint.setStrokeWidth(3);
-        paint.setColor(Color.BLACK);
+        paint.setStrokeWidth(size);
+        paint.setColor(color);
         paint.setStyle(Paint.Style.STROKE);
         paint.setAntiAlias(true);
     }
@@ -185,7 +218,7 @@ public class DrawView extends View {
                         Editable str = edittext.getText();
 
                         if (str != null) {
-                            paint.setTextSize(100);
+                            paint.setTextSize(size);
                             canvas.drawText(str.toString(), xFinal, yFinal, paint);
                             invalidate();
                         }
@@ -193,6 +226,7 @@ public class DrawView extends View {
                 });
 
                 alert.show();
+                break;
                 // show dialog
             case RECTANGLE:
                 canvas.drawRect(coordinatesX, coordinatesY, x, y, paint);
@@ -204,7 +238,6 @@ public class DrawView extends View {
                 // get LeftVertex
 
                 int leftVertexX = (int)(coordinatesX - (x / 2));
-                //int leftVertexY = (int)(coordinatesY - (y / 2));
                 int leftVertexY = (int)y;
 
                 if (leftVertexX < 0) {
@@ -263,7 +296,7 @@ public class DrawView extends View {
 
     public void drawText() {
         drawType = DrawType.TEXT;
-        setFigure();
+        setFont();
     }
 
     public void save(String filePath) {

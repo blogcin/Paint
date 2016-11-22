@@ -13,7 +13,9 @@ public enum DrawType {
     ERASER(4),
     TEXT(5),
     SAVE(6),
-    LOAD(7);
+    LOAD(7),
+    SIZE(8),
+    COLOR(9);
 
     private int value;
 
@@ -45,6 +47,10 @@ public enum DrawType {
                 return SAVE;
             case 7:
                 return LOAD;
+            case 8:
+                return SIZE;
+            case 9:
+                return COLOR;
         }
 
         return null;
